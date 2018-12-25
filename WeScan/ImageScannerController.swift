@@ -56,9 +56,9 @@ public final class ImageScannerController: UINavigationController {
         return view
     }()
 
-    public required init(withImage image: UIImage? = nil) {
+    public required init(withImage image: UIImage? = nil, quad: Quadrilateral? = nil) {
         if let image = image {
-            super.init(rootViewController: EditScanViewController(image:image, quad:nil))
+            super.init(rootViewController: EditScanViewController(image:image, quad:quad))
             navigationBar.tintColor = .black
             navigationBar.isTranslucent = false
         }

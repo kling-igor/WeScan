@@ -31,7 +31,7 @@ public struct Quadrilateral: Transformable {
         self.bottomRight = rectangleFeature.bottomRight
     }
     
-    init(topLeft: CGPoint, topRight: CGPoint, bottomRight: CGPoint, bottomLeft: CGPoint) {
+    public init(topLeft: CGPoint, topRight: CGPoint, bottomRight: CGPoint, bottomLeft: CGPoint) {
         self.topLeft = topLeft
         self.topRight = topRight
         self.bottomRight = bottomRight
@@ -186,14 +186,14 @@ public struct Quadrilateral: Transformable {
     }
 }
 
-extension Quadrilateral {
+public extension Quadrilateral {
     
     /// Converts the current to the cartesian coordinate system (where 0 on the y axis is at the bottom).
     ///
     /// - Parameters:
     ///   - height: The height of the rect containing the quadrilateral.
     /// - Returns: The same quadrilateral in the cartesian corrdinate system.
-    func toCartesian(withHeight height: CGFloat) -> Quadrilateral {
+    public func toCartesian(withHeight height: CGFloat) -> Quadrilateral {
         let topLeft = self.topLeft.cartesian(withHeight: height)
         let topRight = self.topRight.cartesian(withHeight: height)
         let bottomRight = self.bottomRight.cartesian(withHeight: height)

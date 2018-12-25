@@ -165,16 +165,47 @@ final class HomeViewController: UIViewController {
 
 extension HomeViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
     
+    // получая результат определения прямоугольника решает с какими параметрами вызвать
+    func handleRectangleDetection(_ image: UIImage, rectangle: Quadrilateral?) {
+        var quad:Quadrilateral?
+        if let rectangle = rectangle {
+            quad = rectangle.toCartesian(withHeight: image.size.height)
+        }
+        
+        DispatchQueue.main.async { [weak self] in
+            guard let strongSelf = self else {
+                return
+            }
+            
+            let scannerVC = ImageScannerController(withImage: image, quad: quad)
+            scannerVC.imageScannerDelegate = self
+            
+            strongSelf.present(scannerVC, animated: true, completion: nil)
+        }
+    }
+
+    
+    func processImage(_ image:UIImage) {
+        if #available(iOS 11.0, *) {
+            VisionRectangleDetector.rectangle(forImage: CIImage(image:image)! ) { (rectangle) in
+                self.handleRectangleDetection(image, rectangle:rectangle)
+            }
+        } else {
+            CIRectangleDetector.rectangle(forImage: CIImage(image:image)!) { (rectangle) in
+                self.handleRectangleDetection(image, rectangle:rectangle)
+            }
+        }
+    }
+    
     func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
         dismiss(animated: true, completion: nil)
     }
     
     func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
         if let pickedImage = info[.originalImage] as? UIImage {
-            let scannerVC = ImageScannerController(withImage: pickedImage)
-            scannerVC.imageScannerDelegate = self
             dismiss(animated: false)
-            present(scannerVC, animated: true, completion: nil)
+
+            processImage(pickedImage)
         }
         else {
             dismiss(animated: true, completion: nil)
