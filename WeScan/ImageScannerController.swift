@@ -55,14 +55,20 @@ public final class ImageScannerController: UINavigationController {
         view.translatesAutoresizingMaskIntoConstraints = false
         return view
     }()
-    
-    public required init() {
-        let scannerViewController = ScannerViewController()
-        super.init(rootViewController: scannerViewController)
-        navigationBar.tintColor = .black
-        navigationBar.isTranslucent = false
-        self.view.addSubview(blackFlashView)
-        setupConstraints()
+
+    public required init(withImage image: UIImage? = nil) {
+        if let image = image {
+            super.init(rootViewController: EditScanViewController(image:image, quad:nil))
+            navigationBar.tintColor = .black
+            navigationBar.isTranslucent = false
+        }
+        else {
+            super.init(rootViewController: ScannerViewController())
+            navigationBar.tintColor = .black
+            navigationBar.isTranslucent = false
+            self.view.addSubview(blackFlashView)
+            setupConstraints()
+        }
     }
     
     public override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {

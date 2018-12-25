@@ -8,8 +8,9 @@
 
 import UIKit
 import WeScan
+import Photos
 
-final class HomeViewController: UIViewController, UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+final class HomeViewController: UIViewController {
     
     lazy private var logoImageView: UIImageView = {
         let image = UIImage(named: "WeScanLogo")
@@ -80,6 +81,29 @@ final class HomeViewController: UIViewController, UIImagePickerControllerDelegat
     
     // MARK: - Actions
     
+    private func authorizeToAlbum(completion:@escaping (Bool)->Void) {
+        
+        if PHPhotoLibrary.authorizationStatus() != .authorized {
+            print("Will request authorization")
+            PHPhotoLibrary.requestAuthorization({ (status) in
+                if status == .authorized {
+                    DispatchQueue.main.async(execute: {
+                        completion(true)
+                    })
+                } else {
+                    DispatchQueue.main.async(execute: {
+                        completion(false)
+                    })
+                }
+            })
+            
+        } else {
+            DispatchQueue.main.async(execute: {
+                completion(true)
+            })
+        }
+    }
+    
     @objc func presentScanController(_ sender: UIButton) {
 
         let alertController = UIAlertController(title: "Select source...", message: nil, preferredStyle: .alert)
@@ -90,17 +114,22 @@ final class HomeViewController: UIViewController, UIImagePickerControllerDelegat
             self.present(scannerVC, animated: true, completion: nil)
         }
         
-        let chooseFromLibraryAction = UIAlertAction(title: "Choose from Library...", style: .default) { [unowned self] (action:UIAlertAction) in
-            let ipvc = UIImagePickerController()
-            ipvc.sourceType = .photoLibrary
-            ipvc.delegate = self
-            self.present(ipvc, animated: true)
+        let chooseFromLibraryAction = UIAlertAction(title: "Choose from Library...", style: .default) { [weak self] (action:UIAlertAction) in
+            
+            self?.authorizeToAlbum { (authorized) in
+                if authorized == true {
+                    let ipvc = UIImagePickerController()
+                    ipvc.sourceType = .photoLibrary
+                    ipvc.delegate = self
+                    
+                    self?.present(ipvc, animated: true)
+                }
+            }
         }
         
         let cancelAction = UIAlertAction(title: "Cancel", style: .cancel) { (action:UIAlertAction) in
             print("You've pressed cancel");
         }
-
         
         alertController.addAction(takePhotoAction)
         alertController.addAction(chooseFromLibraryAction)
@@ -112,20 +141,47 @@ final class HomeViewController: UIViewController, UIImagePickerControllerDelegat
     
     // MARK: - UIImagePickerControllerDelegate Methods
     
-    private func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: NSDictionary!) {
-        if let pickedImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
-//            imageView.contentMode = .ScaleAspectFit
-//            imageView.image = pickedImage
-        }
-        
-        dismiss(animated: true, completion: nil)
-    }
+//    private func imagePickerController(picker: UIImagePickerController, didFinishPickingMediaWithInfo info: NSDictionary!) {
+//        if let pickedImage = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
+//            print("GOT IMAGE!!!")
+//            let scannerVC = ImageScannerController(withImage: pickedImage)
+//            scannerVC.imageScannerDelegate = self
+//            print("*** PRESENTING IMAGE SCANNER CONTROLLER")
+//            present(scannerVC, animated: true, completion: nil)
+//        }
+//        else {
+//            print("UNABLE TO GOT IMAGE FROM LIBRARY")
+//        }
+//
+//        dismiss(animated: true, completion: nil)
+//    }
     
-    private func imagePickerControllerDidCancel(picker: UIImagePickerController) {
-        dismiss(animated: true, completion: nil)
-    }
+//    private func imagePickerControllerDidCancel(picker: UIImagePickerController) {
+//        print("CANCELED!!!")
+//        dismiss(animated: true, completion: nil)
+//    }
     
 }
+
+extension HomeViewController: UIImagePickerControllerDelegate, UINavigationControllerDelegate {
+    
+    func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+        dismiss(animated: true, completion: nil)
+    }
+    
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        if let pickedImage = info[.originalImage] as? UIImage {
+            let scannerVC = ImageScannerController(withImage: pickedImage)
+            scannerVC.imageScannerDelegate = self
+            dismiss(animated: false)
+            present(scannerVC, animated: true, completion: nil)
+        }
+        else {
+            dismiss(animated: true, completion: nil)
+        }
+    }
+}
+
 
 extension HomeViewController: ImageScannerControllerDelegate {
     func imageScannerController(_ scanner: ImageScannerController, didFailWithError error: Error) {
